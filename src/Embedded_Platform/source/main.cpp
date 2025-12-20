@@ -33,11 +33,16 @@
 
 #define dummy_value 15
 
-/// Base sample time for the task manager. The measurement unit of base sample time is second.
-const std::chrono::milliseconds g_baseTick = std::chrono::milliseconds(1); // microseconds
+// Base sample time for the task manager. The measurement unit of base sample time is milliseconds.
+const std::chrono::milliseconds g_baseTick = std::chrono::milliseconds(1);
 
 // Serial interface with the another device(like single board computer). It's an built-in class of mbed based on the UART communication, the inputs have to be transmitter and receiver pins. 
 UnbufferedSerial g_rpi(USBTX, USBRX, 115200);
+
+// auto dummy = []() {
+//     g_rpi.write("# Booting up... wait for I'm alive #\r\n", 37);
+//     return 0;
+// }();
 
 // It's a task for blinking periodically the built-in led on the Nucleo board, signaling the code is uploaded on the nucleo.
 periodics::CBlinker g_blinker(g_baseTick * 500, LED1);
@@ -54,13 +59,13 @@ periodics::CTotalVoltage g_totalvoltage(g_baseTick*3000, A4, g_rpi);
 periodics::CImu g_imu(g_baseTick*150, g_rpi, I2C_SDA, I2C_SCL);
 
 //PIN for a motor speed in ms, inferior and superior limit
-drivers::CSpeedingMotor g_speedingDriver(D3, -500, 500); //speed in mm/s
+drivers::CSpeedingMotor g_speedingDriver(D3, -500, 500, g_rpi); //speed in mm/s
 
-//PIN for angle in servo degrees, inferior and superior limit
-drivers::CSteeringMotor g_steeringDriver(D4, -250, 250);
+//PIN for angle in servo degrees, inferior and superior limit scaled by 10 for precision (250 = 25.0°)
+drivers::CSteeringMotor g_steeringDriver(D4, -250, 250, g_rpi); //steering in 0.1 degrees
 
 // Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface.
-brain::CRobotStateMachine g_robotstatemachine(g_baseTick * 50, g_rpi, g_steeringDriver, g_speedingDriver);
+brain::CRobotStateMachine g_robotstatemachine(g_baseTick * 1, g_rpi, g_steeringDriver, g_speedingDriver);
 
 periodics::CResourcemonitor g_resourceMonitor(g_baseTick * 5000, g_rpi);
 
@@ -80,12 +85,15 @@ drivers::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
     {"steer",          mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackSTEERcommand)},
     {"brake",          mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackBRAKEcommand)},
     {"vcd",            mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackVCDcommand)},
+    {"vcdCalib",       mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackVCDCalibcommand)},
+    {"steerLimits",    mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackSteerLimitscommand)},
+    {"alive",          mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackAlivecommand)},
     {"battery",        mbed::callback(&g_totalvoltage,      &periodics::CTotalVoltage::serialCallbackTOTALVcommand)},
     {"instant",        mbed::callback(&g_instantconsumption,&periodics::CInstantConsumption::serialCallbackINSTANTcommand)},
     {"imu",            mbed::callback(&g_imu,               &periodics::CImu::serialCallbackIMUcommand)},
     {"kl",             mbed::callback(&g_klmanager,         &brain::CKlmanager::serialCallbackKLCommand)},
     {"batteryCapacity",mbed::callback(&g_batteryManager,    &brain::CBatterymanager::serialCallbackBATTERYCommand)},
-    {"resourceMonitor",mbed::callback(&g_resourceMonitor,   &periodics::CResourcemonitor::serialCallbackRESMONCommand),}
+    {"resourceMonitor",mbed::callback(&g_resourceMonitor,   &periodics::CResourcemonitor::serialCallbackRESMONCommand)},
 };
 
 // Create the serial monitor object, which decodes, redirects the messages and transmits the responses.
@@ -102,7 +110,7 @@ utils::CTask* g_taskList[] = {
     &g_powermanager,
     &g_resourceMonitor,
     &g_alerts,
-    // USER NEW PERIODICS BEGIN -
+    // USER NEW PERIODICS BEGIN
     
     // USER NEW PERIODICS END
 }; 
