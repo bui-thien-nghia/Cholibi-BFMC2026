@@ -71,7 +71,7 @@ class processCamera(WorkerProcess):
     def _init_threads(self):
         """Create the Camera Publisher thread and add to the list of threads."""
         camTh = threadCamera(
-         self.queuesList, self.logging, self.debugging
+            self.queuesList, self.logging, self.debugging
         )
         self.threads.append(camTh)
 

@@ -74,7 +74,7 @@ class threadGateway(ThreadWithStop):
     # ================================== UNSUBSCRIBE =====================================
 
     def unsubscribe(self, message):
-        """This functin will remove the pipe into the approved messages list and it will be added into the dictionary of sending
+        """This function will remove the pipe into the approved messages list and it will be added into the dictionary of sending
         Args:
             message(dictionary): Dictionary received from the multiprocessing queues ( the config one).
         """

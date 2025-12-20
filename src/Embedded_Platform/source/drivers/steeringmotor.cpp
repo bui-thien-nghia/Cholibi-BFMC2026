@@ -32,9 +32,6 @@
 
 #define scaling_factor_1 10
 #define scaling_factor_2 100
-#define calibrated 1
-#define calib_sup_limit 146
-#define calib_inf_limit -167
 
 namespace drivers{
     /**
@@ -48,15 +45,19 @@ namespace drivers{
     CSteeringMotor::CSteeringMotor(
             PinName f_pwm_pin, 
             int f_inf_limit, 
-            int f_sup_limit,
-            UnbufferedSerial& f_serial
+            int f_sup_limit
         )
         :m_pwm_pin(f_pwm_pin)
         ,m_inf_limit(f_inf_limit)
         ,m_sup_limit(f_sup_limit)
-        , m_serial(f_serial)
     {
-        m_pwm_pin.pulsewidth_us(zero_default);
+        uint16_t off_pulsewidth = 1000;
+        // Set the ms_period on the pwm_pin
+        m_pwm_pin.period_ms(ms_period);
+        m_pwm_pin.pulsewidth_us(off_pulsewidth);
+        ThisThread::sleep_for(chrono::milliseconds(10)); 
+        // Set position to zero
+        m_pwm_pin.pulsewidth_us(zero_default/scaling_factor_2);
     };
 
 
@@ -69,55 +70,63 @@ namespace drivers{
     /**
     * @brief Interpolates values based on steering input.
     *
-    * This function interpolates `pwmValues` based on the provided `steering` input.
+    * This function interpolates `stepValues` and `zeroDefaultValues` based on the provided `steering` input.
     * The interpolation is made using `steeringValueP` and `steeringValueN` as reference values.
     *
     * @param steering The input steering value for which the values need to be interpolated.
-    * @param steeringValueP Positive reference values for steering (right direction).
-    * @param steeringValueN Negative reference values for steering (left direction).
-    * @param pwmValuesP PWM values corresponding to steeringValueP
-    * @param pwmValuesN PWM values corresponding to steeringValueN
+    * @param steeringValueP Positive reference values for steering.
+    * @param steeringValueN Negative reference values for steering.
+    * @param stepValues Step values corresponding to steeringValueP and steeringValueN which need to be interpolated.
+    * @param zeroDefaultValues Zero default values corresponding to steeringValueP and steeringValueN for interpolation.
     * @param size The size of the arrays.
-    * @return The new value for `pwm_value`
+    * @return A pair of interpolated values: { interpolated stepValue, interpolated zeroDefaultValue }.
     */
-    int16_t CSteeringMotor::interpolate(int steering, const int steeringValueP[], const int steeringValueN[], const int pwmValuesP[], const int pwmValuesN[], int size)
+    std::pair<int, int> CSteeringMotor::interpolate(int steering, const int steeringValueP[], const int steeringValueN[], const int stepValues[], const int zeroDefaultValues[], int size)
     {
-        const int SCALE = 1000; // Precision factor for fixed-point arithmetic
-
-        if(steering == 0) return pwmValuesP[0];
-        if(steering >= steeringValueP[size-1]) return pwmValuesP[size-1];
-        if(steering <= steeringValueN[size-1]) return pwmValuesN[size-1];
-
-        // For negative steering values
-        if(steering < 0){
-            for(uint8_t i = 1; i < size; i++)
+        // If steering is within the bounds of the first positive and negative reference values
+        if(steering <= steeringValueP[0]){
+            if (steering >= steeringValueN[0])
             {
-                if (steering >= steeringValueN[i])
+                return {stepValues[0], zeroDefaultValues[0]};
+            }
+            else{
+                for(uint8_t i=1; i<size; i++)
                 {
-                    int deltaPWM = (pwmValuesN[i] - pwmValuesN[i-1]) * SCALE;
-                    int deltaSteering = steeringValueN[i] - steeringValueN[i-1];
-                    int slope = deltaPWM / deltaSteering; // Compute slope in fixed-point
-                    int interpFixed = pwmValuesN[i-1] * SCALE + slope * (steering - steeringValueN[i-1]);
-                    return (int16_t)(interpFixed / SCALE);
+                    // Find the interval of negative reference values where steering falls into
+                    if (steering >= steeringValueN[i])
+                    {
+                        // Calculate slopes for interpolation
+                        int slopeStepValue = (stepValues[i] - stepValues[i-1]) / (steeringValueN[i] - steeringValueN[i-1]);
+                        int slopeZeroDefault = (zeroDefaultValues[i] - zeroDefaultValues[i-1]) / (steeringValueN[i] - steeringValueN[i-1]);
+
+                        // Return the interpolated values
+                        return {stepValues[i-1] + slopeStepValue * (steering - steeringValueN[i-1]), zeroDefaultValues[i-1] + slopeZeroDefault * (steering - steeringValueN[i-1])};
+                    }
                 }
             }
         }
 
-        // For positive steering values
-        for(uint8_t i = 1; i < size; i++)
+        // Boundary conditions for positive and negative reference values
+        if(steering >= steeringValueP[size-1]) return {stepValues[size-1], zeroDefaultValues[size-1]};
+        if(steering <= steeringValueN[size-1]) return {stepValues[size-1], zeroDefaultValues[size-1]};
+
+        // Interpolation for values between positive reference values
+        for(uint8_t i=1; i<size; i++)
         {
             if (steering <= steeringValueP[i])
             {
-                int deltaPWM = (pwmValuesP[i] - pwmValuesP[i-1]) * SCALE;
-                int deltaSteering = steeringValueP[i] - steeringValueP[i-1];
-                int slope = deltaPWM / deltaSteering; // Compute slope in fixed-point
-                int interpFixed = pwmValuesP[i-1] * SCALE + slope * (steering - steeringValueP[i-1]);
-                return (int16_t)(interpFixed / SCALE);
+                // Calculate slopes for interpolation
+                int slopeStepValue = (stepValues[i] - stepValues[i-1]) / (steeringValueP[i] - steeringValueP[i-1]);
+                int slopeZeroDefault = (zeroDefaultValues[i] - zeroDefaultValues[i-1]) / (steeringValueP[i] - steeringValueP[i-1]);
+
+                // Return the interpolated values
+                return {stepValues[i-1] + slopeStepValue * (steering - steeringValueP[i-1]), zeroDefaultValues[i-1] + slopeZeroDefault * (steering - steeringValueP[i-1])};
             }
         }
-        
-        return pwmValuesP[0];
-    }
+
+        // Default return if no interval is found
+        return {-1, -1};
+    };
 
     /** @brief  It modifies the angle of the servo motor, which controls the steering wheels. 
      *
@@ -125,102 +134,34 @@ namespace drivers{
      */
     void CSteeringMotor::setAngle(int f_angle)
     {
-        pwm_value = zero_default;
+        std::pair<int, int> interpolationResult;
 
-        if(calibrated == 1)
-        {
-            pwm_value = computePWMPolynomial(f_angle);
-        }
-        else{
-            pwm_value = interpolate(f_angle, steeringValueP, steeringValueN, pwmValuesP, pwmValuesN, 3);
-        }
-
-        m_pwm_pin.pulsewidth_us(pwm_value);
+        interpolationResult = interpolate(f_angle, steeringValueP, steeringValueN, stepValues, zeroDefaultValues, 3);
         
+        step_value = interpolationResult.first;
+        zero_default = interpolationResult.second;
+
+        m_pwm_pin.pulsewidth_us(conversion(f_angle));
     };
 
     /** @brief  It converts angle degree to duty cycle for pwm signal. 
      * 
      *  @param f_angle    angle degree
-     *  \return     new `pwm_value`
+     *  \return         duty cycle in interval [0,1]
      */
-    int CSteeringMotor::computePWMPolynomial(int steering)
+    int CSteeringMotor::conversion(int f_angle)
     {
-        int64_t y=zero_default;
-        // POLYNOMIAL CODE START
-
-        // Cubic spline evaluation with 8 segments
-        static const int64_t knots[9] = {-149, -94, -61, -22, 0, 49, 98, 134, 161};
-        static const int64_t coeffs[8][4] = { 
-            {-24LL, 0LL, 2586025LL, 1210056704LL},
-            {-27LL, -3888LL, 2373710LL, 1347420160LL},
-            {105LL, -6566LL, 2022002LL, 1421869056LL},
-            {120LL, 5790LL, 1991591LL, 1497366528LL},
-            {-182LL, 13782LL, 2424888LL, 1545601024LL},
-            {154LL, -13375LL, 2445106LL, 1677721600LL},
-            {232LL, 9054LL, 2235247LL, 1782579200LL},
-            {-426LL, 34420LL, 3821379LL, 1887436800LL}
-        };
-        
-        // Find the correct segment
-        int segment = -1;
-        for (int i = 0; i < 8; i++) {
-            if (steering >= knots[i] && steering <= knots[i + 1]) {
-                segment = i;
-                break;
-            }
-        }
-        
-        // Clamp to boundary segments if out of range
-        if (segment == -1) {
-            if (steering < knots[0]) segment = 0;
-            else segment = 8 - 1;
-        }
-        
-        // Evaluate cubic polynomial for this segment: a*(x-xi)^3 + b*(x-xi)^2 + c*(x-xi) + d
-        int64_t dx = steering - knots[segment];
-        int64_t dx2 = dx * dx;
-        int64_t dx3 = dx2 * dx;
-        
-        y = (coeffs[segment][0] * dx3 + coeffs[segment][1] * dx2 + 
-             coeffs[segment][2] * dx + coeffs[segment][3]) / 1048576LL;
-        
-        /* Cubic spline interpolation with 8 segments
-         * Each segment is defined by: a*(x-xi)^3 + b*(x-xi)^2 + c*(x-xi) + d
-         * Coefficients are scaled by 1048576 for integer arithmetic
-         */
-        // POLYNOMIAL CODE END
-        return (int)y;
-    }
-
+        return (((step_value * f_angle)/(scaling_factor_1*scaling_factor_2)) + (zero_default/scaling_factor_2));
+    };
+//
     /**
      * @brief It verifies whether a number is in a given range
      * 
      * @param f_angle value 
-     * @return inf_limit, if the value is lower than the range's low
-     * @return sup_limit, if the value is higher than the range's high
-    */
-    int CSteeringMotor::inRange(int f_angle){
-
-        if(calibrated == 1){
-            if(f_angle < calib_inf_limit) return calib_inf_limit;
-            if(f_angle > calib_sup_limit) return calib_sup_limit;
-            return f_angle;
-        } else{
-            if(f_angle < m_inf_limit) return m_inf_limit;
-            if(f_angle > m_sup_limit) return m_sup_limit;
-            return f_angle;
-        }
-
+     * @return true means, that the value is in the range
+     * @return false means, that the value isn't in the range
+     */
+    bool CSteeringMotor::inRange(int f_angle){
+        return m_inf_limit<=f_angle && f_angle<=m_sup_limit;
     };
-
-    int CSteeringMotor::get_upper_limit()
-    {
-        return m_sup_limit;
-    }
-
-    int CSteeringMotor::get_lower_limit()
-    {
-        return m_inf_limit;
-    }
 }; // namespace hardware::drivers

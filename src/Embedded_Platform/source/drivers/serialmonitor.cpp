@@ -40,9 +40,9 @@ namespace drivers{
      *  @param f_serialSubscriberMap      map with the key and the callback functions
      */
     CSerialMonitor::CSerialMonitor(
-            mbed::UnbufferedSerial& f_serialPort,
+            UnbufferedSerial& f_serialPort,
             CSerialSubscriberMap f_serialSubscriberMap)
-        :utils::CTask(std::chrono::milliseconds(10))
+        :utils::CTask(std::chrono::milliseconds(0))
         , m_serialPort(f_serialPort)
         , m_RxBuffer()
         , m_TxBuffer()

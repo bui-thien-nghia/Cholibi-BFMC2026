@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import threading
 import copy
 import math
 import numpy as np
@@ -305,22 +306,26 @@ class Calibration():
         else:
             steer_value = self.current_command['desiredSteer'] * 10 * (-1 if direction == 'left' else 1)
 
-        self.controlCalibSender.send({
-            'Time': self.current_command['time'], 
-            'Speed': self.current_command['desiredSpeed'], 
-            'Steer': steer_value
-        })
-        
-        calibPWMData = self.calibPWMDataSubscriber.receive_with_block()
-        if calibPWMData is not None:
-            self.current_command['actualSpeedPWM'] = calibPWMData['speedPWM']
-            self.current_command['actualSteerPWM'] = calibPWMData['steerPWM']
-        
-        calibRunDone = self.calibRunDoneSubscriber.receive_with_block()
-        if calibRunDone is not None:
-            self.socketio.emit('Calibration', {'action': 'calibration_run_done'}, room=socketId)
+        def _wait_and_process():
+            self.controlCalibSender.send({
+                'Time': self.current_command['time'], 
+                'Speed': self.current_command['desiredSpeed'], 
+                'Steer': steer_value
+            })
+            
+            calibPWMData = self.calibPWMDataSubscriber.receive_with_block()
+            if calibPWMData is not None:
+                self.current_command['actualSpeedPWM'] = calibPWMData['speedPWM']
+                self.current_command['actualSteerPWM'] = calibPWMData['steerPWM']
+            
+            calibRunDone = self.calibRunDoneSubscriber.receive_with_block()
+            if calibRunDone is not None:
+                self.socketio.emit('Calibration', {'action': 'calibration_run_done'}, room=socketId)
 
-        self.current_step += 1
+            self.current_step += 1
+
+        t = threading.Thread(target=_wait_and_process, daemon=True)
+        t.start()
 
 
     def run_test_run(self, socketId, desired_steer=0):
