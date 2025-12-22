@@ -1,4 +1,4 @@
-# Cholibi-BFMC2026
+# cholibi-BFMC2026
 ## Members:
 - Đinh Kiệt
 - Bùi Thiện Nghĩa
