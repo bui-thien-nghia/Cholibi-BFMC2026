@@ -49,7 +49,7 @@ namespace drivers{
             PinName f_pwm_pin, 
             int f_inf_limit, 
             int f_sup_limit,
-            UnbufferedSerial& f_serial
+            mbed::UnbufferedSerial& f_serial
         )
         :m_pwm_pin(f_pwm_pin)
         ,m_inf_limit(f_inf_limit)

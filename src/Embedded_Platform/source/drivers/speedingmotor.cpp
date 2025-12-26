@@ -47,7 +47,7 @@ namespace drivers{
             PinName f_pwm_pin, 
             int f_inf_limit, 
             int f_sup_limit,
-            UnbufferedSerial& f_serial
+            mbed::UnbufferedSerial& f_serial
         )
         : m_pwm_pin(f_pwm_pin)
         , m_inf_limit(f_inf_limit)
@@ -74,14 +74,12 @@ namespace drivers{
     {
         pwm_value = zero_default;
 
-        if (f_speed != 0) {
-            if (calibrated == 1)
-            {
-                pwm_value = computePWMPolynomial(f_speed);
-            }
-            else {
-                pwm_value = interpolate(-f_speed, speedValuesP, speedValuesN, pwmValuesP, pwmValuesN, 25);
-            }
+        if (calibrated == 1)
+        {
+            pwm_value = computePWMPolynomial(f_speed);
+        }
+        else {
+            pwm_value = interpolate(-f_speed, speedValuesP, speedValuesN, pwmValuesP, pwmValuesN, 25);
         }
         
         m_pwm_pin.pulsewidth_us(pwm_value);

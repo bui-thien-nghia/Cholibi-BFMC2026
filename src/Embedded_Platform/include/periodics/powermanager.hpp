@@ -55,7 +55,7 @@ namespace periodics
             CPowermanager(
                 std::chrono::milliseconds f_period,
                 brain::CKlmanager& f_CKlmanager,
-                UnbufferedSerial& f_serial,
+                mbed::UnbufferedSerial& f_serial,
                 periodics::CTotalVoltage& f_totalVoltage,
                 periodics::CInstantConsumption& f_instantConsumption,
                 periodics::CAlerts& f_alerts
@@ -70,7 +70,7 @@ namespace periodics
 
             brain::CKlmanager& m_CKlmanager;
 
-            UnbufferedSerial& m_serial;
+            mbed::UnbufferedSerial& m_serial;
 
             periodics::CTotalVoltage& m_totalVoltage;
 

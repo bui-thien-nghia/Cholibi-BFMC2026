@@ -39,7 +39,6 @@
 #include <chrono>
 
 #include <brain/globalsv.hpp>
-#include <UnbufferedSerial.h>
 
 namespace drivers
 {
@@ -73,7 +72,7 @@ namespace drivers
                 PinName f_pwm_pin,
                 int f_inf_limit,
                 int f_sup_limit,
-                UnbufferedSerial& f_serial
+                mbed::UnbufferedSerial& f_serial
             );
             /* Destructor */
             ~CSteeringMotor();
@@ -87,7 +86,7 @@ namespace drivers
             /** @brief PWM output pin */
             PwmOut m_pwm_pin;
             /** @brief Serial reference for communication */
-            UnbufferedSerial& m_serial;
+            mbed::UnbufferedSerial& m_serial;
             /** @brief 0 default */
             int zero_default = 1500; //0.075(7.5% duty cycle) * 20000µs(ms_period)
             /** @brief ms_period */

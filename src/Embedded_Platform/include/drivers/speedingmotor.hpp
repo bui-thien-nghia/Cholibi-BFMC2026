@@ -84,7 +84,7 @@ namespace drivers
             /** @brief PWM output pin */
             PwmOut m_pwm_pin;
             /** @brief Serial reference for communication */
-            UnbufferedSerial& m_serial;
+            mbed::UnbufferedSerial& m_serial;
             /** @brief 0 default */
             uint16_t zero_default = 1491; //0.074568(7.4% duty cycle) * 20000µs(ms_period)
             /** @brief 0 default */

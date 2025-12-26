@@ -37,7 +37,7 @@
 const std::chrono::milliseconds g_baseTick = std::chrono::milliseconds(1);
 
 // Serial interface with the another device(like single board computer). It's an built-in class of mbed based on the UART communication, the inputs have to be transmitter and receiver pins. 
-UnbufferedSerial g_rpi(USBTX, USBRX, 115200);
+mbed::UnbufferedSerial g_rpi(USBTX, USBRX, 115200);
 
 // auto dummy = []() {
 //     g_rpi.write("# Booting up... wait for I'm alive #\r\n", 37);
