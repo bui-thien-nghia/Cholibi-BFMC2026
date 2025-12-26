@@ -57,7 +57,7 @@ namespace periodics
             CInstantConsumption(
                 std::chrono::milliseconds f_period, 
                 mbed::AnalogIn f_pin, 
-                UnbufferedSerial& f_serial
+                mbed::UnbufferedSerial& f_serial
             );
             /* Destructor */
             ~CInstantConsumption();
@@ -74,7 +74,7 @@ namespace periodics
             /** @brief Active flag  */
             bool            m_isActive;
             /* @brief Serial communication obj.  */
-            UnbufferedSerial&          m_serial;
+            mbed::UnbufferedSerial&          m_serial;
 
             uint64_t m_period;
     }; // class CInstantConsumption

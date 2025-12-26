@@ -10,7 +10,7 @@ namespace periodics
     * @brief Class constructorresourcemonitor
     *
     */
-    CResourcemonitor::CResourcemonitor(std::chrono::milliseconds f_period, UnbufferedSerial& f_serial)
+    CResourcemonitor::CResourcemonitor(std::chrono::milliseconds f_period, mbed::UnbufferedSerial& f_serial)
     : utils::CTask(f_period)
     , m_serial(f_serial)
     , m_isActive(false)
@@ -26,7 +26,7 @@ namespace periodics
 
     void CResourcemonitor::serialCallbackRESMONCommand(char const * a, char * b){
         uint8_t l_isActivate=0;
-        uint8_t l_res = sscanf(a,"%hhu",&l_isActivate);
+        uint8_t l_res = sscanf(a,"%hd",&l_isActivate);
 
         if(1 == l_res){
             if(uint8_globalsV_value_of_kl == 15 || uint8_globalsV_value_of_kl == 30)

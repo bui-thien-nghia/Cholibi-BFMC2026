@@ -54,7 +54,7 @@ namespace periodics{
 
     CImu::CImu(
             std::chrono::milliseconds    f_period, 
-            UnbufferedSerial& f_serial,
+            mbed::UnbufferedSerial& f_serial,
             PinName SDA,
             PinName SCL)
         : utils::CTask(f_period)
@@ -208,7 +208,7 @@ namespace periodics{
      */
     void CImu::serialCallbackIMUcommand(char const * a, char * b) {
         uint8_t l_isActivate=0;
-        uint8_t l_res = sscanf(a,"%hhu",&l_isActivate);
+        uint8_t l_res = sscanf(a,"%hd",&l_isActivate);
 
         if(1 == l_res){
             if(uint8_globalsV_value_of_kl == 15 || uint8_globalsV_value_of_kl == 30)

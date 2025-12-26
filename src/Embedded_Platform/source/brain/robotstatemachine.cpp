@@ -298,7 +298,7 @@ namespace brain{
         int speed, steer;
         uint8_t time_deciseconds;
 
-        uint8_t parsed = sscanf(message, "%d;%d;%hhu", &speed, &steer, &time_deciseconds);
+        uint8_t parsed = sscanf(message, "%d;%d;%d", &speed, &steer, &time_deciseconds);
 
         if(uint8_globalsV_value_of_kl != 30){
             sprintf(response,"kl 30 is required!!");

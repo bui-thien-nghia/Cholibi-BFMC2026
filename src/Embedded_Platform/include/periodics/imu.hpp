@@ -55,7 +55,7 @@ namespace periodics
             /* Constructor */
             CImu(
                 std::chrono::milliseconds    f_period,
-                UnbufferedSerial& f_serial,
+                mbed::UnbufferedSerial& f_serial,
                 PinName SDA,
                 PinName SCL
             );
@@ -98,7 +98,7 @@ namespace periodics
             bool            m_isActive;
 
             /* @brief Serial communication obj.  */
-            UnbufferedSerial&      m_serial;
+            mbed::UnbufferedSerial&      m_serial;
 
             s32 m_velocityX;
             s32 m_velocityY;

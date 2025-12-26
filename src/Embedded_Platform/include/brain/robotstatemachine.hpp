@@ -58,7 +58,7 @@ namespace brain
             /* Constructor */
             CRobotStateMachine(
                 std::chrono::milliseconds                      f_period, 
-                UnbufferedSerial&             f_serialPort, 
+                mbed::UnbufferedSerial&             f_serialPort, 
                 drivers::ISteeringCommand&    f_steeringControl,
                 drivers::ISpeedingCommand&    f_speedingControl
             );
@@ -72,12 +72,18 @@ namespace brain
             void serialCallbackBRAKEcommand(char const * a, char * b);
             /* Serial callback method for vcd */
             void serialCallbackVCDcommand(char const * message, char * response);
+            /* Serial callback method for vcd calib */
+            void serialCallbackVCDCalibcommand(char const * message, char * response);
+            /* Serial callback method for steer limits */
+            void serialCallbackSteerLimitscommand(char const * message, char * response);
+            /* Serial callback method for alive */
+            void serialCallbackAlivecommand(char const * message, char * response);
 
         private:
             /* Contains the state machine, which control the lower level drivers (motor and steering) based the current state. */
             virtual void _run();
             /* reference to Serial object */
-            UnbufferedSerial&                    m_serialPort;
+            mbed::UnbufferedSerial&                    m_serialPort;
             /* Steering wheel control interface */
             drivers::ISteeringCommand&    m_steeringControl;
             /* Steering wheel control interface */
@@ -93,6 +99,8 @@ namespace brain
 
             int m_speed;
             int m_steering;
+
+            bool m_calibON;
         
     }; // class CRobotStateMachine
 }; // namespace brain

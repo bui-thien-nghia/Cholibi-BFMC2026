@@ -21,7 +21,7 @@ namespace periodics
             /* Construnctor */
             CResourcemonitor(
                 std::chrono::milliseconds f_period,
-                UnbufferedSerial& f_serial
+                mbed::UnbufferedSerial& f_serial
             );
             /* Destructor */
             ~CResourcemonitor();
@@ -32,7 +32,7 @@ namespace periodics
             /* private variables & method member */
             virtual void    _run();
 
-            UnbufferedSerial& m_serial;
+            mbed::UnbufferedSerial& m_serial;
 
             bool m_isActive;
     }; // class CResourcemonitor

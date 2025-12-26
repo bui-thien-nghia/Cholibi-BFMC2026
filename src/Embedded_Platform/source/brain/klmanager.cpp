@@ -71,7 +71,7 @@ namespace brain
     {
         uint8_t l_keyValue = 0;
 
-        (void)sscanf(a,"%hhu",&l_keyValue);
+        (void)sscanf(a,"%hd",&l_keyValue);
 
         if(!bool_globalsV_ShuttedDown)
         {

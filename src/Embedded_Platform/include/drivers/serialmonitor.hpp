@@ -70,7 +70,7 @@ namespace drivers
 
             /* Constructor */
             CSerialMonitor(
-                UnbufferedSerial& f_serialPort,
+                mbed::UnbufferedSerial& f_serialPort,
                 CSerialSubscriberMap f_serialSubscriberMap
             );
             /* Destructor */
@@ -84,7 +84,7 @@ namespace drivers
             virtual void _run();
 
             /** @brief Serial communication port */
-            UnbufferedSerial& m_serialPort;
+            mbed::UnbufferedSerial& m_serialPort;
             /** @brief Rx buffer */
             utils::CQueue<char,255> m_RxBuffer;
             /** @brief Tx buffer */
