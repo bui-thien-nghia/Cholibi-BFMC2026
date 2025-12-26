@@ -99,7 +99,7 @@ namespace drivers{
 
         // Cubic spline evaluation with 10 segments
         static const int64_t knots[11] = {-565, -417, -365, -194, -102, 0, 135, 234, 421, 492, 682};
-        static const int64_t coeffs[10][4] = { 
+        static const int64_t coeffs[10][4] = {
             {0LL, 0LL, -117359LL, 1741684736LL},
             {0LL, -210LL, -148388LL, 1722810368LL},
             {3LL, -288LL, -174369LL, 1714421760LL},
@@ -147,7 +147,7 @@ namespace drivers{
      */
     void CSpeedingMotor::setBrake()
     {
-        m_pwm_pin.write(zero_default);
+        m_pwm_pin.pulsewidth_us(zero_default);
     };
 
     /**
