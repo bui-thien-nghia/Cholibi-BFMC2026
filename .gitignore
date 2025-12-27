@@ -1,1 +1,5 @@
-/lab_n_archives
+*.pt
+*.yaml
+images
+dataset
+run
